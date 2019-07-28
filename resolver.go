@@ -4,13 +4,13 @@ package auth_manager
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/LucasFrezarini/go-auth-manager/crypt"
 	"github.com/LucasFrezarini/go-auth-manager/dao"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 	"github.com/LucasFrezarini/go-auth-manager/models"
+	"github.com/vektah/gqlparser/gqlerror"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -41,8 +41,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data CreateUserInput)
 	hash, err := crypt.HashPassword(data.Password)
 
 	if err != nil {
-		return nil, errors.New("Error while trying to save the user")
+		return nil, &gqlerror.Error{
+			Message: "Error while trying to save the user",
+			Extensions: map[string]interface{}{
+				"code": "INTERNAL_SERVER_ERROR",
+			},
+		}
 	}
+
 	user := models.User{
 		Email:     data.Email,
 		Password:  hash,
@@ -55,7 +61,12 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data CreateUserInput)
 	insertedID, err := userDao.CreateOne(user)
 
 	if err != nil {
-		return nil, errors.New("Error while trying to save the user")
+		return nil, &gqlerror.Error{
+			Message: "Error while trying to save the user",
+			Extensions: map[string]interface{}{
+				"code": "INTERNAL_SERVER_ERROR",
+			},
+		}
 	}
 
 	user.ID = insertedID
@@ -76,11 +87,21 @@ func (r *mutationResolver) Login(ctx context.Context, data LoginUserInput) (*Aut
 	})
 
 	if err != nil {
-		return nil, errors.New("Error while trying to login")
+		return nil, &gqlerror.Error{
+			Message: "Wrong email or password",
+			Extensions: map[string]interface{}{
+				"code": "UNAUTHORIZED",
+			},
+		}
 	}
 
 	if !crypt.ComparePassword(user.Password, data.Password) {
-		return nil, errors.New("Wrong email or password")
+		return nil, &gqlerror.Error{
+			Message: "Wrong email or password",
+			Extensions: map[string]interface{}{
+				"code": "UNAUTHORIZED",
+			},
+		}
 	}
 
 	token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
@@ -89,7 +110,12 @@ func (r *mutationResolver) Login(ctx context.Context, data LoginUserInput) (*Aut
 	})
 
 	if err != nil {
-		return nil, errors.New("Error while trying to login")
+		return nil, &gqlerror.Error{
+			Message: "Error while trying to login",
+			Extensions: map[string]interface{}{
+				"code": "INTERNAL_SERVER_ERROR",
+			},
+		}
 	}
 
 	return &AuthUserPayload{
@@ -113,7 +139,12 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*Va
 	id, err := primitive.ObjectIDFromHex(claims.Sub)
 
 	if err != nil {
-		return nil, errors.New("Error while trying to validate the token")
+		return nil, &gqlerror.Error{
+			Message: "Error while trying to validate the token",
+			Extensions: map[string]interface{}{
+				"code": "INTERNAL_SERVER_ERROR",
+			},
+		}
 	}
 
 	user, err = userDao.FindByID(id)
