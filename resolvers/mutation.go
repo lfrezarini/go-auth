@@ -1,43 +1,20 @@
-//go:generate go run github.com/99designs/gqlgen
-
-package auth_manager
+package resolvers
 
 import (
 	"context"
 	"time"
 
 	"github.com/LucasFrezarini/go-auth-manager/crypt"
-	"github.com/LucasFrezarini/go-auth-manager/dao"
+	"github.com/LucasFrezarini/go-auth-manager/gqlmodels"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 	"github.com/LucasFrezarini/go-auth-manager/models"
 	"github.com/vektah/gqlparser/gqlerror"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Resolver struct {
-	users []*models.User
-}
-
-var userDao dao.UserDao
-
-func init() {
-	userDao = dao.UserDao{}
-}
-
-func (r *Resolver) Mutation() MutationResolver {
-	return &mutationResolver{r}
-}
-func (r *Resolver) Query() QueryResolver {
-	return &queryResolver{r}
-}
-
-func (r *Resolver) User() UserResolver {
-	return &userResolver{r}
-}
-
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreateUser(ctx context.Context, data CreateUserInput) (*AuthUserPayload, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.CreateUserInput) (*gqlmodels.AuthUserPayload, error) {
 	hash, err := crypt.HashPassword(data.Password)
 
 	if err != nil {
@@ -75,13 +52,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data CreateUserInput)
 		Sub: user.ID.Hex(),
 	})
 
-	return &AuthUserPayload{
+	return &gqlmodels.AuthUserPayload{
 		Token: token,
 		User:  &user,
 	}, nil
 }
 
-func (r *mutationResolver) Login(ctx context.Context, data LoginUserInput) (*AuthUserPayload, error) {
+func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserInput) (*gqlmodels.AuthUserPayload, error) {
 	user, err := userDao.FindOne(models.User{
 		Email: data.Email,
 	})
@@ -118,18 +95,18 @@ func (r *mutationResolver) Login(ctx context.Context, data LoginUserInput) (*Aut
 		}
 	}
 
-	return &AuthUserPayload{
+	return &gqlmodels.AuthUserPayload{
 		User:  user,
 		Token: token,
 	}, nil
 }
 
-func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*ValidateTokenPayload, error) {
+func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gqlmodels.ValidateTokenPayload, error) {
 	claims, err := jsonwebtoken.Decode(token)
 	var user *models.User
 
 	if err != nil {
-		return &ValidateTokenPayload{
+		return &gqlmodels.ValidateTokenPayload{
 			Claims: &claims,
 			User:   user,
 			Valid:  false,
@@ -150,37 +127,16 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*Va
 	user, err = userDao.FindByID(id)
 
 	if err != nil {
-		return &ValidateTokenPayload{
+		return &gqlmodels.ValidateTokenPayload{
 			Claims: &jsonwebtoken.Claims{},
 			User:   user,
 			Valid:  false,
 		}, nil
 	}
 
-	return &ValidateTokenPayload{
+	return &gqlmodels.ValidateTokenPayload{
 		Claims: &claims,
 		User:   user,
 		Valid:  true,
 	}, nil
-}
-
-type queryResolver struct{ *Resolver }
-
-func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
-	users := userDao.GetAll()
-	return users, nil
-}
-
-type userResolver struct{ *Resolver }
-
-func (r *userResolver) ID(ctx context.Context, obj *models.User) (string, error) {
-	return obj.ID.Hex(), nil
-}
-
-func (r *userResolver) CreatedAt(ctx context.Context, obj *models.User) (string, error) {
-	return obj.CreatedAt.Format("2006-01-02 15:04:05"), nil
-}
-
-func (r *userResolver) UpdatedAt(ctx context.Context, obj *models.User) (string, error) {
-	return obj.UpdatedAt.Format("2006-01-02 15:04:05"), nil
 }

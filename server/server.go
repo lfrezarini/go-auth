@@ -6,7 +6,8 @@ import (
 	"os"
 
 	"github.com/99designs/gqlgen/handler"
-	"github.com/LucasFrezarini/go-auth-manager"
+	"github.com/LucasFrezarini/go-auth-manager/generated"
+	"github.com/LucasFrezarini/go-auth-manager/resolvers"
 )
 
 const defaultPort = "8080"
@@ -18,7 +19,7 @@ func main() {
 	}
 
 	http.Handle("/", handler.Playground("GraphQL playground", "/query"))
-	http.Handle("/query", handler.GraphQL(auth_manager.NewExecutableSchema(auth_manager.Config{Resolvers: &auth_manager.Resolver{}})))
+	http.Handle("/query", handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolvers.Resolver{}})))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

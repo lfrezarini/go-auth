@@ -6,11 +6,13 @@
 schema:
 - schema.graphql
 exec:
-  filename: generated.go
+  filename: generated/generated.go
+  package: generated
 model:
-  filename: models_gen.go
+  filename: gqlmodels/models_gen.go
+  package: gqlmodels
 resolver:
-  filename: resolver.go
+  filename: resolvers/resolvers.go
   type: Resolver
 autobind: []
 models:
