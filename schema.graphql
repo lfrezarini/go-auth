@@ -1,0 +1,47 @@
+type User {
+  id: ID!
+  email: String!
+  password: String!
+  roles: [String!]!
+  active: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Claims {
+  iss: String!
+  sub: String!
+}
+
+type AuthUserPayload {
+  user: User!
+  token: String!
+}
+
+type ValidateTokenPayload {
+  claims: Claims
+  user: User
+  valid: Boolean!
+}
+
+input CreateUserInput {
+  email: String!
+  password: String!
+  roles: [String!]!
+}
+
+input LoginUserInput {
+  email: String!
+  password: String!
+}
+
+type Query {
+  users: [User!]!
+}
+
+type Mutation {
+  createUser(data: CreateUserInput!): AuthUserPayload!
+  login(data: LoginUserInput!): AuthUserPayload!
+  validateToken(token: String!): ValidateTokenPayload!
+}
+

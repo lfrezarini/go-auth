@@ -1,0 +1,21 @@
+# .gqlgen.yml example
+#
+# Refer to https://gqlgen.com/config/
+# for detailed .gqlgen.yml documentation.
+
+schema:
+- schema.graphql
+exec:
+  filename: generated.go
+model:
+  filename: models_gen.go
+resolver:
+  filename: resolver.go
+  type: Resolver
+autobind: []
+models:
+  User:
+    model: github.com/LucasFrezarini/go-auth-manager/models.User
+  Claims: 
+    model: github.com/LucasFrezarini/go-auth-manager/jsonwebtoken.Claims
+
