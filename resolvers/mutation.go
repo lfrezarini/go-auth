@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/LucasFrezarini/go-auth-manager/crypt"
+	"github.com/LucasFrezarini/go-auth-manager/gqlerrors"
 	"github.com/LucasFrezarini/go-auth-manager/gqlmodels"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 	"github.com/LucasFrezarini/go-auth-manager/models"
-	"github.com/vektah/gqlparser/gqlerror"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -18,12 +18,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 	hash, err := crypt.HashPassword(data.Password)
 
 	if err != nil {
-		return nil, &gqlerror.Error{
-			Message: "Error while trying to save the user",
-			Extensions: map[string]interface{}{
-				"code": "INTERNAL_SERVER_ERROR",
-			},
-		}
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
 	}
 
 	user := models.User{
@@ -38,12 +33,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 	insertedID, err := userDao.CreateOne(user)
 
 	if err != nil {
-		return nil, &gqlerror.Error{
-			Message: "Error while trying to save the user",
-			Extensions: map[string]interface{}{
-				"code": "INTERNAL_SERVER_ERROR",
-			},
-		}
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
 	}
 
 	user.ID = insertedID
@@ -64,21 +54,11 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 	})
 
 	if err != nil {
-		return nil, &gqlerror.Error{
-			Message: "Wrong email or password",
-			Extensions: map[string]interface{}{
-				"code": "UNAUTHORIZED",
-			},
-		}
+		return nil, gqlerrors.CreateAuthorizationError()
 	}
 
 	if !crypt.ComparePassword(user.Password, data.Password) {
-		return nil, &gqlerror.Error{
-			Message: "Wrong email or password",
-			Extensions: map[string]interface{}{
-				"code": "UNAUTHORIZED",
-			},
-		}
+		return nil, gqlerrors.CreateAuthorizationError()
 	}
 
 	token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
@@ -87,12 +67,7 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 	})
 
 	if err != nil {
-		return nil, &gqlerror.Error{
-			Message: "Error while trying to login",
-			Extensions: map[string]interface{}{
-				"code": "INTERNAL_SERVER_ERROR",
-			},
-		}
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to login")
 	}
 
 	return &gqlmodels.AuthUserPayload{
@@ -116,12 +91,7 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gq
 	id, err := primitive.ObjectIDFromHex(claims.Sub)
 
 	if err != nil {
-		return nil, &gqlerror.Error{
-			Message: "Error while trying to validate the token",
-			Extensions: map[string]interface{}{
-				"code": "INTERNAL_SERVER_ERROR",
-			},
-		}
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to validate the token")
 	}
 
 	user, err = userDao.FindByID(id)
