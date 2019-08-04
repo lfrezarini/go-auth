@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,7 +14,13 @@ import (
 var db *mongo.Database
 
 func init() {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	uri := os.Getenv("MONGO_URI")
+
+	if uri == "" {
+		uri = "mongodb://127.0.0.1:27017"
+	}
+
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
 		log.Panic(err)
 	}

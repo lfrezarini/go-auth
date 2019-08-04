@@ -15,6 +15,11 @@ import (
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.CreateUserInput) (*gqlmodels.AuthUserPayload, error) {
+
+	if emailAlreadyExists(data.Email) {
+		return nil, gqlerrors.CreateConflictError("User already exists")
+	}
+
 	hash, err := crypt.HashPassword(data.Password)
 
 	if err != nil {
@@ -46,6 +51,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 		Token: token,
 		User:  &user,
 	}, nil
+}
+
+func emailAlreadyExists(email string) bool {
+	registered, _ := userDao.FindOne(models.User{
+		Email: email,
+	})
+
+	return registered != nil
 }
 
 func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserInput) (*gqlmodels.AuthUserPayload, error) {

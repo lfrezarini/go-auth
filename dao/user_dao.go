@@ -19,11 +19,12 @@ type UserDao struct{}
 const UserCollection = "users"
 
 // GetAll fetch all the users registered on the database
-func (d *UserDao) GetAll() []*models.User {
+func (d *UserDao) GetAll() ([]*models.User, error) {
 	collection := db.Collection(UserCollection)
 	cursor, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
+		return nil, fmt.Errorf("Error while trying to fetch all users: %v", err)
 	}
 
 	defer cursor.Close(context.Background())
@@ -35,17 +36,19 @@ func (d *UserDao) GetAll() []*models.User {
 		err := cursor.Decode(&user)
 
 		if err != nil {
-			log.Panic(err)
+			log.Print(err)
+			return nil, fmt.Errorf("Error while trying to fetch all users: %v", err)
 		}
 
 		users = append(users, &user)
 	}
 
 	if err := cursor.Err(); err != nil {
-		log.Panic(err)
+		log.Print(err)
+		return nil, fmt.Errorf("Error while trying to fetch all users: %v", err)
 	}
 
-	return users
+	return users, nil
 }
 
 // CreateOne create an user in the collection on the database
@@ -54,13 +57,14 @@ func (d *UserDao) CreateOne(user models.User) (primitive.ObjectID, error) {
 	bson, err := bson.Marshal(user)
 
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 		return primitive.NilObjectID, errors.New("Error while trying to convert the input to BSON")
 	}
 
 	res, err := collection.InsertOne(context.Background(), bson)
+
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 		return primitive.NilObjectID, errors.New("Error while trying to insert the data into the collection User")
 	}
 
@@ -68,7 +72,7 @@ func (d *UserDao) CreateOne(user models.User) (primitive.ObjectID, error) {
 		return oid, nil
 	}
 
-	log.Panic("Error while trying to parse the InsertedID")
+	log.Print("Error while trying to parse the InsertedID")
 	return primitive.NilObjectID, errors.New("Error while trying to parse the InsertedID")
 }
 
@@ -78,7 +82,7 @@ func (d *UserDao) FindOne(user models.User) (*models.User, error) {
 	bson, err := bson.Marshal(user)
 
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 		return nil, errors.New("Error while trying to convert the input to BSON")
 	}
 

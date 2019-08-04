@@ -11,7 +11,7 @@ import (
 func HashPassword(plainPassword string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 		return "", fmt.Errorf("Error while trying to encrypt the password: %v", err)
 	}
 

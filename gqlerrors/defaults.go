@@ -21,3 +21,13 @@ func CreateAuthorizationError() *gqlerror.Error {
 		},
 	}
 }
+
+// CreateConflictError creates a default Graphql conflict error from a request
+func CreateConflictError(message string) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: message,
+		Extensions: map[string]interface{}{
+			"code": Conflict,
+		},
+	}
+}

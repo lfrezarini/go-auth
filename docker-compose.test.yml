@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  go-auth-test:
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile.test
+    depends_on: 
+      - go-auth-db-test
+    networks: 
+      - go-auth-integration-test
+    volumes:
+      - $PWD:/go/go-auth-manager
+    environment: 
+      - MONGO_URI=mongodb://go-auth-db-test:27017
+  
+  go-auth-db-test: 
+    build: ./tests/seed
+    ports: 
+      - 27017:27017
+    restart: on-failure
+    networks: 
+      - go-auth-integration-test
+    environment: 
+      - MONGO_INITDB_DATABASE=auth_manager
+
+networks: 
+  go-auth-integration-test:
+    driver: bridge
