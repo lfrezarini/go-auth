@@ -46,6 +46,7 @@ type Query {
 type Mutation {
   createUser(data: CreateUserInput!): AuthUserPayload!
   updateUser(data: UpdateUserInput!): User! @isAuthenticated
+  deactivateUser: User! @isAuthenticated
   login(data: LoginUserInput!): AuthUserPayload!
   validateToken(token: String!): ValidateTokenPayload!
 }

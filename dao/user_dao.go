@@ -125,6 +125,7 @@ func (d *UserDao) UpdateByID(id primitive.ObjectID, data models.User) (*models.U
 	err := collection.FindOneAndUpdate(context.Background(), bson.M{"_id": id}, bson.M{
 		"$set": bson.M{
 			"password":   data.Password,
+			"active":     data.Active,
 			"updated_at": time.Now(),
 		},
 	}, &options).Decode(&updatedUser)

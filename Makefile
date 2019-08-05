@@ -11,5 +11,8 @@ test-db-down:
 generate:
 	go run github.com/99designs/gqlgen
 
+install:
+	go mod download
+	
 run:
 	go run server/server.go

@@ -59,10 +59,11 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateUser    func(childComplexity int, data gqlmodels.CreateUserInput) int
-		Login         func(childComplexity int, data gqlmodels.LoginUserInput) int
-		UpdateUser    func(childComplexity int, data gqlmodels.UpdateUserInput) int
-		ValidateToken func(childComplexity int, token string) int
+		CreateUser     func(childComplexity int, data gqlmodels.CreateUserInput) int
+		DeactivateUser func(childComplexity int) int
+		Login          func(childComplexity int, data gqlmodels.LoginUserInput) int
+		UpdateUser     func(childComplexity int, data gqlmodels.UpdateUserInput) int
+		ValidateToken  func(childComplexity int, token string) int
 	}
 
 	Query struct {
@@ -89,6 +90,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, data gqlmodels.CreateUserInput) (*gqlmodels.AuthUserPayload, error)
 	UpdateUser(ctx context.Context, data gqlmodels.UpdateUserInput) (*models.User, error)
+	DeactivateUser(ctx context.Context) (*models.User, error)
 	Login(ctx context.Context, data gqlmodels.LoginUserInput) (*gqlmodels.AuthUserPayload, error)
 	ValidateToken(ctx context.Context, token string) (*gqlmodels.ValidateTokenPayload, error)
 }
@@ -156,6 +158,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["data"].(gqlmodels.CreateUserInput)), true
+
+	case "Mutation.deactivateUser":
+		if e.complexity.Mutation.DeactivateUser == nil {
+			break
+		}
+
+		return e.complexity.Mutation.DeactivateUser(childComplexity), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -380,6 +389,7 @@ type Query {
 type Mutation {
   createUser(data: CreateUserInput!): AuthUserPayload!
   updateUser(data: UpdateUserInput!): User! @isAuthenticated
+  deactivateUser: User! @isAuthenticated
   login(data: LoginUserInput!): AuthUserPayload!
   validateToken(token: String!): ValidateTokenPayload!
 }
@@ -717,6 +727,56 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateUser(rctx, args["data"].(gqlmodels.UpdateUserInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if data, ok := tmp.(*models.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/LucasFrezarini/go-auth-manager/models.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋmodelsᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deactivateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeactivateUser(rctx)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			return ec.directives.IsAuthenticated(ctx, nil, directive0)
@@ -2627,6 +2687,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateUser":
 			out.Values[i] = ec._Mutation_updateUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deactivateUser":
+			out.Values[i] = ec._Mutation_deactivateUser(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

@@ -154,3 +154,25 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, data gqlmodels.Update
 
 	return user, nil
 }
+
+func (r *mutationResolver) DeactivateUser(ctx context.Context) (*models.User, error) {
+	userID := ctx.Value("userID")
+
+	objectID, err := primitive.ObjectIDFromHex(fmt.Sprintf("%v", userID))
+
+	if err != nil {
+		log.Printf("Error while trying to convert userID to objectID: %v\n", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to deactivate the user user")
+	}
+
+	user, err := userDao.UpdateByID(objectID, models.User{
+		Active: false,
+	})
+
+	if err != nil {
+		log.Printf("Error while trying to deactivate the user: %v", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to deactivate the user user")
+	}
+
+	return user, nil
+}
