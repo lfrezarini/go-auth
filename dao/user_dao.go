@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/LucasFrezarini/go-auth-manager/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -108,4 +110,28 @@ func (d *UserDao) FindByID(id primitive.ObjectID) (*models.User, error) {
 	}
 
 	return &result, nil
+}
+
+// UpdateByID updates a user by his id and returns the updated object
+func (d *UserDao) UpdateByID(id primitive.ObjectID, data models.User) (*models.User, error) {
+	collection := db.Collection(UserCollection)
+	updatedUser := models.User{}
+	returnDocument := options.After
+
+	options := options.FindOneAndUpdateOptions{
+		ReturnDocument: &returnDocument,
+	}
+
+	err := collection.FindOneAndUpdate(context.Background(), bson.M{"_id": id}, bson.M{
+		"$set": bson.M{
+			"password":   data.Password,
+			"updated_at": time.Now(),
+		},
+	}, &options).Decode(&updatedUser)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error while trying to update document: %v", err)
+	}
+
+	return &updatedUser, nil
 }

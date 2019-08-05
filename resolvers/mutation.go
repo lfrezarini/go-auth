@@ -2,6 +2,8 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/LucasFrezarini/go-auth-manager/crypt"
@@ -122,4 +124,33 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gq
 		User:   user,
 		Valid:  true,
 	}, nil
+}
+
+func (r *mutationResolver) UpdateUser(ctx context.Context, data gqlmodels.UpdateUserInput) (*models.User, error) {
+	userID := ctx.Value("userID")
+
+	objectID, err := primitive.ObjectIDFromHex(fmt.Sprintf("%v", userID))
+
+	if err != nil {
+		log.Printf("Error while trying to convert userID to objectID: %v\n", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to update user")
+	}
+
+	hash, err := crypt.HashPassword(data.Password)
+
+	if err != nil {
+		log.Printf("Error while trying to crypt password: %v", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to update user")
+	}
+
+	user, err := userDao.UpdateByID(objectID, models.User{
+		Password: hash,
+	})
+
+	if err != nil {
+		log.Printf("Error while trying to update user: %v", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to update user")
+	}
+
+	return user, nil
 }

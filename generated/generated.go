@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -43,6 +44,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	IsAuthenticated func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -59,6 +61,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateUser    func(childComplexity int, data gqlmodels.CreateUserInput) int
 		Login         func(childComplexity int, data gqlmodels.LoginUserInput) int
+		UpdateUser    func(childComplexity int, data gqlmodels.UpdateUserInput) int
 		ValidateToken func(childComplexity int, token string) int
 	}
 
@@ -85,6 +88,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateUser(ctx context.Context, data gqlmodels.CreateUserInput) (*gqlmodels.AuthUserPayload, error)
+	UpdateUser(ctx context.Context, data gqlmodels.UpdateUserInput) (*models.User, error)
 	Login(ctx context.Context, data gqlmodels.LoginUserInput) (*gqlmodels.AuthUserPayload, error)
 	ValidateToken(ctx context.Context, token string) (*gqlmodels.ValidateTokenPayload, error)
 }
@@ -164,6 +168,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["data"].(gqlmodels.LoginUserInput)), true
+
+	case "Mutation.updateUser":
+		if e.complexity.Mutation.UpdateUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUser(childComplexity, args["data"].(gqlmodels.UpdateUserInput)), true
 
 	case "Mutation.validateToken":
 		if e.complexity.Mutation.ValidateToken == nil {
@@ -348,6 +364,10 @@ input CreateUserInput {
   roles: [String!]!
 }
 
+input UpdateUserInput {
+  password: String!
+}
+
 input LoginUserInput {
   email: String!
   password: String!
@@ -359,11 +379,12 @@ type Query {
 
 type Mutation {
   createUser(data: CreateUserInput!): AuthUserPayload!
+  updateUser(data: UpdateUserInput!): User! @isAuthenticated
   login(data: LoginUserInput!): AuthUserPayload!
   validateToken(token: String!): ValidateTokenPayload!
 }
 
-`},
+directive @isAuthenticated on FIELD_DEFINITION`},
 )
 
 // endregion ************************** generated!.gotpl **************************
@@ -390,6 +411,20 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	var arg0 gqlmodels.LoginUserInput
 	if tmp, ok := rawArgs["data"]; ok {
 		arg0, err = ec.unmarshalNLoginUserInput2githubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋgqlmodelsᚐLoginUserInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["data"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 gqlmodels.UpdateUserInput
+	if tmp, ok := rawArgs["data"]; ok {
+		arg0, err = ec.unmarshalNUpdateUserInput2githubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋgqlmodelsᚐUpdateUserInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -652,6 +687,63 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNAuthUserPayload2ᚖgithubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋgqlmodelsᚐAuthUserPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateUser(rctx, args["data"].(gqlmodels.UpdateUserInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if data, ok := tmp.(*models.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/LucasFrezarini/go-auth-manager/models.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2423,6 +2515,24 @@ func (ec *executionContext) unmarshalInputLoginUserInput(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, obj interface{}) (gqlmodels.UpdateUserInput, error) {
+	var it gqlmodels.UpdateUserInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "password":
+			var err error
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -2512,6 +2622,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "createUser":
 			out.Values[i] = ec._Mutation_createUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateUser":
+			out.Values[i] = ec._Mutation_updateUser(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3031,6 +3146,10 @@ func (ec *executionContext) marshalNString2ᚕstring(ctx context.Context, sel as
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋgqlmodelsᚐUpdateUserInput(ctx context.Context, v interface{}) (gqlmodels.UpdateUserInput, error) {
+	return ec.unmarshalInputUpdateUserInput(ctx, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {

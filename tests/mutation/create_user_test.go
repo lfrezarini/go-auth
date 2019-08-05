@@ -6,14 +6,12 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
-	"github.com/99designs/gqlgen/handler"
-	"github.com/LucasFrezarini/go-auth-manager/generated"
-	"github.com/LucasFrezarini/go-auth-manager/resolvers"
+	"github.com/LucasFrezarini/go-auth-manager/middlewares"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateUser(t *testing.T) {
-	srv := httptest.NewServer(handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolvers.Resolver{}})))
+	srv := httptest.NewServer(middlewares.MakeHandlers())
 	c := client.New(srv.URL)
 
 	t.Run("Should create a user", func(t *testing.T) {

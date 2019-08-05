@@ -23,6 +23,10 @@ type LoginUserInput struct {
 	Password string `json:"password"`
 }
 
+type UpdateUserInput struct {
+	Password string `json:"password"`
+}
+
 type ValidateTokenPayload struct {
 	Claims *jsonwebtoken.Claims `json:"claims"`
 	User   *models.User         `json:"user"`
