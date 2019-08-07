@@ -110,7 +110,10 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gq
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to validate the token")
 	}
 
-	user, err = userDao.FindByID(id)
+	user, err = userDao.FindOne(models.User{
+		ID:     id,
+		Active: true,
+	})
 
 	if err != nil {
 		return &gqlmodels.ValidateTokenPayload{
