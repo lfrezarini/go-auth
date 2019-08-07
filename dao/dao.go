@@ -3,9 +3,9 @@ package dao
 import (
 	"context"
 	"log"
-	"os"
 	"time"
 
+	"github.com/LucasFrezarini/go-auth-manager/env"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
@@ -14,13 +14,7 @@ import (
 var db *mongo.Database
 
 func init() {
-	uri := os.Getenv("MONGO_URI")
-
-	if uri == "" {
-		uri = "mongodb://127.0.0.1:27017"
-	}
-
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	client, err := mongo.NewClient(options.Client().ApplyURI(env.Config.MongoURI))
 	if err != nil {
 		log.Panic(err)
 	}

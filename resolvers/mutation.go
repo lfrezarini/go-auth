@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/LucasFrezarini/go-auth-manager/crypt"
+	"github.com/LucasFrezarini/go-auth-manager/env"
 	"github.com/LucasFrezarini/go-auth-manager/gqlerrors"
 	"github.com/LucasFrezarini/go-auth-manager/gqlmodels"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
@@ -45,7 +46,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 
 	user.ID = insertedID
 	token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-		Iss: "http://localhost:8080",
+		Iss: env.Config.ServerHost,
 		Sub: user.ID.Hex(),
 	})
 
@@ -78,7 +79,7 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 	}
 
 	token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-		Iss: "http://localhost:8080",
+		Iss: env.Config.ServerHost,
 		Sub: user.ID.Hex(),
 	})
 
@@ -93,12 +94,21 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 }
 
 func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gqlmodels.ValidateTokenPayload, error) {
-	claims, err := jsonwebtoken.Decode(token)
 	var user *models.User
+
+	claims, err := jsonwebtoken.Decode(token)
 
 	if err != nil {
 		return &gqlmodels.ValidateTokenPayload{
 			Claims: &claims,
+			User:   user,
+			Valid:  false,
+		}, nil
+	}
+
+	if claims.Iss != env.Config.ServerHost {
+		return &gqlmodels.ValidateTokenPayload{
+			Claims: &jsonwebtoken.Claims{},
 			User:   user,
 			Valid:  false,
 		}, nil
