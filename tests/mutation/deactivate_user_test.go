@@ -72,7 +72,7 @@ func TestDeactivateUser(t *testing.T) {
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
 			Iss: "http://test.io",
-			Sub: "5d470b3e98b0116d7d8ca48c",
+			Sub: "5d4a22e9587f3dbb8d33fd39",
 		})
 
 		if err != nil {
@@ -99,8 +99,8 @@ func TestDeactivateUser(t *testing.T) {
 
 		data := expectedResponse.Data.DeactivateUser
 
-		require.Equal(t, "5d470b3e98b0116d7d8ca48c", data.ID)
-		require.Equal(t, "test1@test.com", data.Email)
+		require.Equal(t, "5d4a22e9587f3dbb8d33fd39", data.ID)
+		require.Equal(t, "test4@test.com", data.Email)
 		require.False(t, data.Active)
 	})
 }

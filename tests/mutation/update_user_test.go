@@ -70,7 +70,7 @@ func TestUpdateUser(t *testing.T) {
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
 			Iss: "http://test.io",
-			Sub: "5d470b3e98b0116d7d8ca48c",
+			Sub: "5d4a22e9587f3dbb8d33fd38",
 		})
 
 		if err != nil {
@@ -96,7 +96,7 @@ func TestUpdateUser(t *testing.T) {
 
 		data := expectedResponse.Data.UpdateUser
 
-		require.Equal(t, "5d470b3e98b0116d7d8ca48c", data.ID)
-		require.Equal(t, "test1@test.com", data.Email)
+		require.Equal(t, "5d4a22e9587f3dbb8d33fd38", data.ID)
+		require.Equal(t, "test3@test.com", data.Email)
 	})
 }

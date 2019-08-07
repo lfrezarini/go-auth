@@ -65,7 +65,8 @@ func emailAlreadyExists(email string) bool {
 
 func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserInput) (*gqlmodels.AuthUserPayload, error) {
 	user, err := userDao.FindOne(models.User{
-		Email: data.Email,
+		Email:  data.Email,
+		Active: true,
 	})
 
 	if err != nil {
