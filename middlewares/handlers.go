@@ -14,7 +14,8 @@ import (
 
 // MakeHandlers returns the handlers used by server
 func MakeHandlers() http.Handler {
-	return AuthHandler(handler.GraphQL(makeExecutableSchema(), makeErrorPresenter()))
+	return RequestLogger(AuthHandler(
+		handler.GraphQL(makeExecutableSchema(), makeErrorPresenter())))
 }
 
 func makeExecutableSchema() graphql.ExecutableSchema {

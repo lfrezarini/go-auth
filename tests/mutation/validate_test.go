@@ -28,6 +28,17 @@ type validateResponse struct {
 	}
 }
 
+func requireResponseIsInvalid(t *testing.T, resp validateResponse) {
+	validateToken := resp.ValidateToken
+
+	require.Empty(t, validateToken.User.ID)
+	require.Empty(t, validateToken.User.Email)
+	require.Empty(t, validateToken.User.Roles)
+	require.Empty(t, validateToken.Claims.Iss)
+	require.Empty(t, validateToken.Claims.Sub)
+	require.False(t, validateToken.Valid)
+}
+
 func TestValidate(t *testing.T) {
 	srv := httptest.NewServer(middlewares.MakeHandlers())
 	c := client.New(srv.URL)
@@ -96,14 +107,7 @@ func TestValidate(t *testing.T) {
 			}
 		`), &resp)
 
-		validateToken := resp.ValidateToken
-
-		require.Empty(t, validateToken.User.ID)
-		require.Empty(t, validateToken.User.Email)
-		require.Empty(t, validateToken.User.Roles)
-		require.Empty(t, validateToken.Claims.Iss)
-		require.Empty(t, validateToken.Claims.Sub)
-		require.False(t, validateToken.Valid)
+		requireResponseIsInvalid(t, resp)
 	})
 
 	t.Run("Should return false and empty fields if the owner of the token is inactive", func(t *testing.T) {
@@ -137,14 +141,7 @@ func TestValidate(t *testing.T) {
 			}
 		`, token), &resp)
 
-		validateToken := resp.ValidateToken
-
-		require.Empty(t, validateToken.User.ID)
-		require.Empty(t, validateToken.User.Email)
-		require.Empty(t, validateToken.User.Roles)
-		require.Empty(t, validateToken.Claims.Iss)
-		require.Empty(t, validateToken.Claims.Sub)
-		require.False(t, validateToken.Valid)
+		requireResponseIsInvalid(t, resp)
 	})
 
 	t.Run("Token should be invalid if the issuer from token is different than the auth manager server", func(t *testing.T) {
@@ -178,13 +175,6 @@ func TestValidate(t *testing.T) {
 			}
 		`, token), &resp)
 
-		validateToken := resp.ValidateToken
-
-		require.Empty(t, validateToken.User.ID)
-		require.Empty(t, validateToken.User.Email)
-		require.Empty(t, validateToken.User.Roles)
-		require.Empty(t, validateToken.Claims.Iss)
-		require.Empty(t, validateToken.Claims.Sub)
-		require.False(t, validateToken.Valid)
+		requireResponseIsInvalid(t, resp)
 	})
 }
