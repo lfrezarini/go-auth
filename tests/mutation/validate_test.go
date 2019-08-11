@@ -144,6 +144,40 @@ func TestValidate(t *testing.T) {
 		requireResponseIsInvalid(t, resp)
 	})
 
+	t.Run("Token should be invalid if the sub id doesn't exists on the database", func(t *testing.T) {
+		var resp validateResponse
+
+		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
+			Iss: "http://test.io",
+			Sub: "5d5035c42dd89da99833d081", // Valid objectID but no user is registered with it
+		})
+
+		if err != nil {
+			t.FailNow()
+		}
+
+		c.MustPost(fmt.Sprintf(`
+			mutation {
+				validateToken(token: "%s") {
+					user {
+					  id
+					  email
+					  roles
+					  createdAt
+					  updatedAt
+					}
+					claims {
+						iss
+						sub
+					}
+					valid
+				  }
+			}
+		`, token), &resp)
+
+		requireResponseIsInvalid(t, resp)
+	})
+
 	t.Run("Token should be invalid if the issuer from token is different than the auth manager server", func(t *testing.T) {
 		var resp validateResponse
 
