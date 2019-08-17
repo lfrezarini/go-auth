@@ -24,6 +24,8 @@ services:
     restart: on-failure
     networks: 
       - go-auth-integration
+    volumes:
+      - mongo_data:/data/db
     environment: 
       - MONGO_INITDB_DATABASE=auth_manager
       - MONGO_INITDB_ROOT_USERNAME=admin
@@ -32,3 +34,7 @@ services:
 networks: 
   go-auth-integration:
     driver: bridge
+
+
+volumes:
+  mongo_data:

@@ -29,8 +29,10 @@ func Decode(tokenString string) (Claims, error) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return Claims{
-			Iss: claims["iss"].(string),
-			Sub: claims["sub"].(string),
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  claims["iss"].(string),
+				Subject: claims["sub"].(string),
+			},
 		}, nil
 	}
 
@@ -41,8 +43,8 @@ func Decode(tokenString string) (Claims, error) {
 // Encode creates a new jwt token with the provided claims
 func Encode(claims Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": claims.Iss,
-		"sub": claims.Sub,
+		"iss": claims.StandardClaims.Issuer,
+		"sub": claims.StandardClaims.Subject,
 	})
 
 	tokenString, err := token.SignedString(jwtSecret)

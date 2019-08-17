@@ -12,6 +12,7 @@ import (
 	"github.com/LucasFrezarini/go-auth-manager/gqlmodels"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 	"github.com/LucasFrezarini/go-auth-manager/models"
+	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -46,8 +47,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 
 	user.ID = insertedID
 	token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-		Iss: env.Config.ServerHost,
-		Sub: user.ID.Hex(),
+		jwt.StandardClaims{
+			Issuer:  env.Config.ServerHost,
+			Subject: user.ID.Hex(),
+		},
 	})
 
 	return &gqlmodels.AuthUserPayload{
@@ -79,8 +82,10 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 	}
 
 	token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-		Iss: env.Config.ServerHost,
-		Sub: user.ID.Hex(),
+		jwt.StandardClaims{
+			Issuer:  env.Config.ServerHost,
+			Subject: user.ID.Hex(),
+		},
 	})
 
 	if err != nil {
@@ -106,7 +111,7 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gq
 		}, nil
 	}
 
-	if claims.Iss != env.Config.ServerHost {
+	if claims.Issuer != env.Config.ServerHost {
 		return &gqlmodels.ValidateTokenPayload{
 			Claims: &jsonwebtoken.Claims{},
 			User:   user,
@@ -114,7 +119,7 @@ func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gq
 		}, nil
 	}
 
-	id, err := primitive.ObjectIDFromHex(claims.Sub)
+	id, err := primitive.ObjectIDFromHex(claims.Subject)
 
 	if err != nil {
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to validate the token")

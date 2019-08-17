@@ -10,6 +10,7 @@ import (
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 	"github.com/LucasFrezarini/go-auth-manager/middlewares"
 	tests "github.com/LucasFrezarini/go-auth-manager/tests/helpers"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,8 +72,10 @@ func TestDeactivateUser(t *testing.T) {
 		`
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-			Iss: "http://test.io",
-			Sub: "5d4a22e9587f3dbb8d33fd39",
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  "http://test.io",
+				Subject: "5d4a22e9587f3dbb8d33fd39",
+			},
 		})
 
 		if err != nil {

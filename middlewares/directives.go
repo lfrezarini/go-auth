@@ -19,7 +19,7 @@ func AuthHandler(next http.Handler) http.Handler {
 			if err != nil {
 				next.ServeHTTP(w, r)
 			} else {
-				ctx := context.WithValue(r.Context(), "userID", claims.Sub)
+				ctx := context.WithValue(r.Context(), "userID", claims.Subject)
 				next.ServeHTTP(w, r.WithContext(ctx))
 			}
 		}

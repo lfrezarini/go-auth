@@ -31,3 +31,8 @@ func (r *Resolver) Query() generated.QueryResolver {
 func (r *Resolver) User() generated.UserResolver {
 	return &userResolver{r}
 }
+
+//Claims returns the claims resolver from GraphQL schema
+func (r *Resolver) Claims() generated.ClaimsResolver {
+	return &claimsResolver{r}
+}

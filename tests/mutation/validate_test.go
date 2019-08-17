@@ -8,6 +8,7 @@ import (
 	"github.com/99designs/gqlgen/client"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 	"github.com/LucasFrezarini/go-auth-manager/middlewares"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,8 +48,10 @@ func TestValidate(t *testing.T) {
 		var resp validateResponse
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-			Iss: "http://test.io",
-			Sub: "5d470b3e98b0116d7d8ca48c",
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  "http://test.io",
+				Subject: "5d470b3e98b0116d7d8ca48c",
+			},
 		})
 
 		if err != nil {
@@ -114,8 +117,10 @@ func TestValidate(t *testing.T) {
 		var resp validateResponse
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-			Iss: "http://test.io",
-			Sub: "5d4a22b1106eded67d47c02e", // test2@test.com is inactive on seed.js
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  "http://test.io",
+				Subject: "5d4a22b1106eded67d47c02e", // test2@test.com is inactive on seed.js
+			},
 		})
 
 		if err != nil {
@@ -148,8 +153,10 @@ func TestValidate(t *testing.T) {
 		var resp validateResponse
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-			Iss: "http://test.io",
-			Sub: "5d5035c42dd89da99833d081", // Valid objectID but no user is registered with it
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  "http://test.io",
+				Subject: "5d5035c42dd89da99833d081", // Valid objectID but no user is registered with it
+			},
 		})
 
 		if err != nil {
@@ -182,8 +189,10 @@ func TestValidate(t *testing.T) {
 		var resp validateResponse
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
-			Iss: "http://another.site.io",
-			Sub: "5d470b3e98b0116d7d8ca48c",
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  "http://another.site.io",
+				Subject: "5d470b3e98b0116d7d8ca48c",
+			},
 		})
 
 		if err != nil {

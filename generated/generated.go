@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Claims() ClaimsResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
@@ -87,6 +88,10 @@ type ComplexityRoot struct {
 	}
 }
 
+type ClaimsResolver interface {
+	Iss(ctx context.Context, obj *jsonwebtoken.Claims) (string, error)
+	Sub(ctx context.Context, obj *jsonwebtoken.Claims) (string, error)
+}
 type MutationResolver interface {
 	CreateUser(ctx context.Context, data gqlmodels.CreateUserInput) (*gqlmodels.AuthUserPayload, error)
 	UpdateUser(ctx context.Context, data gqlmodels.UpdateUserInput) (*models.User, error)
@@ -594,13 +599,13 @@ func (ec *executionContext) _Claims_iss(ctx context.Context, field graphql.Colle
 		Object:   "Claims",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Iss, nil
+		return ec.resolvers.Claims().Iss(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -631,13 +636,13 @@ func (ec *executionContext) _Claims_sub(ctx context.Context, field graphql.Colle
 		Object:   "Claims",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Sub, nil
+		return ec.resolvers.Claims().Sub(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2645,15 +2650,33 @@ func (ec *executionContext) _Claims(ctx context.Context, sel ast.SelectionSet, o
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Claims")
 		case "iss":
-			out.Values[i] = ec._Claims_iss(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Claims_iss(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "sub":
-			out.Values[i] = ec._Claims_sub(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Claims_sub(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
