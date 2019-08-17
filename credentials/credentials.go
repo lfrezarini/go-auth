@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ValidateCredentials validate if a jwt claims is in the expected format, validating
+// ValidateCredentials validate if a jwt claims is in the expected format,
 // for instance: The issuer, if the user exists and if its active.
 // If the claims are valid, a pointer to the validated user is returned
 func ValidateCredentials(claims jsonwebtoken.Claims) (*models.User, error) {
@@ -25,7 +25,7 @@ func ValidateCredentials(claims jsonwebtoken.Claims) (*models.User, error) {
 	id, err := primitive.ObjectIDFromHex(claims.Subject)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error while validating clams credentials: %v", err)
+		return nil, fmt.Errorf("Error while validating claims credentials: %v", err)
 	}
 
 	user, err = userDao.FindOne(models.User{
@@ -34,7 +34,7 @@ func ValidateCredentials(claims jsonwebtoken.Claims) (*models.User, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("Error while validating clams credentials: %v", err)
+		return nil, fmt.Errorf("Error while validating claims credentials: %v", err)
 	}
 
 	return user, nil

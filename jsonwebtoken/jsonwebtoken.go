@@ -15,7 +15,7 @@ func Decode(tokenString string) (Claims, error) {
 		return Claims{}, errors.New("Authorization token cannot be empty")
 	}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -27,13 +27,8 @@ func Decode(tokenString string) (Claims, error) {
 		return Claims{}, errors.New("Invalid authorization token")
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return Claims{
-			StandardClaims: jwt.StandardClaims{
-				Issuer:  claims["iss"].(string),
-				Subject: claims["sub"].(string),
-			},
-		}, nil
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return *claims, nil
 	}
 
 	return Claims{}, errors.New("Invalid authorization token")
@@ -42,10 +37,7 @@ func Decode(tokenString string) (Claims, error) {
 
 // Encode creates a new jwt token with the provided claims
 func Encode(claims Claims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": claims.StandardClaims.Issuer,
-		"sub": claims.StandardClaims.Subject,
-	})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(jwtSecret)
 

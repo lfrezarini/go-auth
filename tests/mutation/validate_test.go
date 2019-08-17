@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
@@ -192,6 +193,43 @@ func TestValidate(t *testing.T) {
 			StandardClaims: jwt.StandardClaims{
 				Issuer:  "http://another.site.io",
 				Subject: "5d470b3e98b0116d7d8ca48c",
+			},
+		})
+
+		if err != nil {
+			t.FailNow()
+		}
+
+		c.MustPost(fmt.Sprintf(`
+			mutation {
+				validateToken(token: "%s") {
+					user {
+					  id
+					  email
+					  roles
+					  createdAt
+					  updatedAt
+					}
+					claims {
+						iss
+						sub
+					}
+					valid
+				  }
+			}
+		`, token), &resp)
+
+		requireResponseIsInvalid(t, resp)
+	})
+
+	t.Run("Token should be invalid if its expired", func(t *testing.T) {
+		var resp validateResponse
+
+		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
+			StandardClaims: jwt.StandardClaims{
+				Issuer:    "http://test.io",
+				Subject:   "5d470b3e98b0116d7d8ca48c",
+				ExpiresAt: time.Now().UTC().Add(-time.Minute).Unix(), // Expired one minute ago
 			},
 		})
 

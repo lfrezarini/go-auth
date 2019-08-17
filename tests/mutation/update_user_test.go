@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
@@ -135,6 +136,73 @@ func TestUpdateUser(t *testing.T) {
 			StandardClaims: jwt.StandardClaims{
 				Issuer:  "http://another.site.io",
 				Subject: "5d4a22e9587f3dbb8d33fd38",
+			},
+		})
+
+		if err != nil {
+			t.Fatalf("Error while trying to get the token for test: %v", err)
+		}
+
+		headers := map[string]string{
+			"Authorization": token,
+			"Content-Type":  "application/json",
+		}
+
+		response, err := httpClient.DoRequest(srv.URL, query, headers)
+
+		if err != nil {
+			t.Fatalf("Error while doing the request: %v", err)
+		}
+
+		err = json.Unmarshal(response, &expectedResponse)
+
+		if err != nil {
+			t.Fatalf("Error while trying to Unmarshal response: %v", err)
+		}
+
+		require.Empty(t, expectedResponse.Data)
+		require.NotZero(t, len(expectedResponse.Errors))
+
+		errResponse := expectedResponse.Errors[0]
+
+		require.Equal(t, errResponse.Message, "Unauthorized")
+		require.Equal(t, errResponse.Path, []string{"updateUser"})
+		require.Equal(t, errResponse.Extensions.Code, "UNAUTHORIZED")
+	})
+
+	t.Run("Should not allow the update if the user is using an expired token", func(t *testing.T) {
+		var expectedResponse struct {
+			Data   interface{} `json:"data"`
+			Errors []struct {
+				Message    string   `json:"message"`
+				Path       []string `json:"path"`
+				Extensions struct {
+					Code string `json:"code"`
+				} `json:"extensions"`
+			} `json:"errors"`
+		}
+
+		httpClient := tests.HTTPClient{}
+
+		query := `
+			mutation {
+				updateUser(data:{
+					password: "changed"
+				}) {
+					id
+					email
+					roles
+					createdAt
+					updatedAt
+				}
+			}
+		`
+
+		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
+			StandardClaims: jwt.StandardClaims{
+				Issuer:    "http://test.io",
+				Subject:   "5d4a22e9587f3dbb8d33fd38",
+				ExpiresAt: time.Now().UTC().Add(-15 * time.Minute).Unix(),
 			},
 		})
 

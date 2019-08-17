@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -18,7 +19,9 @@ func RequestLogger(next http.Handler) http.Handler {
 			return
 		}
 
-		log.Print(string(dump))
+		if flag.Lookup("test.v") == nil {
+			log.Print(string(dump))
+		}
 
 		next.ServeHTTP(w, r)
 	})
