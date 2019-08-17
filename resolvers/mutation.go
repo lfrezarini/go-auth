@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/LucasFrezarini/go-auth-manager/credentials"
 	"github.com/LucasFrezarini/go-auth-manager/crypt"
 	"github.com/LucasFrezarini/go-auth-manager/env"
 	"github.com/LucasFrezarini/go-auth-manager/gqlerrors"
@@ -99,41 +100,22 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 }
 
 func (r *mutationResolver) ValidateToken(ctx context.Context, token string) (*gqlmodels.ValidateTokenPayload, error) {
-	var user *models.User
-
 	claims, err := jsonwebtoken.Decode(token)
 
 	if err != nil {
 		return &gqlmodels.ValidateTokenPayload{
-			Claims: &claims,
-			User:   user,
+			Claims: nil,
+			User:   nil,
 			Valid:  false,
 		}, nil
 	}
 
-	if claims.Issuer != env.Config.ServerHost {
-		return &gqlmodels.ValidateTokenPayload{
-			Claims: &jsonwebtoken.Claims{},
-			User:   user,
-			Valid:  false,
-		}, nil
-	}
-
-	id, err := primitive.ObjectIDFromHex(claims.Subject)
-
-	if err != nil {
-		return nil, gqlerrors.CreateInternalServerError("Error while trying to validate the token")
-	}
-
-	user, err = userDao.FindOne(models.User{
-		ID:     id,
-		Active: true,
-	})
+	user, err := credentials.ValidateCredentials(claims)
 
 	if err != nil {
 		return &gqlmodels.ValidateTokenPayload{
-			Claims: &jsonwebtoken.Claims{},
-			User:   user,
+			Claims: nil,
+			User:   nil,
 			Valid:  false,
 		}, nil
 	}

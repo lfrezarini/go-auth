@@ -42,6 +42,71 @@ func TestDeactivateUser(t *testing.T) {
 		require.Equal(t, "UNAUTHORIZED", errorResponse.Extensions.Code)
 	})
 
+	t.Run("Should not allow the deactivate if the user is using an token with different issuer", func(t *testing.T) {
+		var expectedResponse struct {
+			Data   interface{} `json:"data"`
+			Errors []struct {
+				Message    string   `json:"message"`
+				Path       []string `json:"path"`
+				Extensions struct {
+					Code string `json:"code"`
+				} `json:"extensions"`
+			} `json:"errors"`
+		}
+
+		httpClient := tests.HTTPClient{}
+
+		query := `
+			mutation {
+				deactivateUser {
+					id
+					email
+					roles
+					active
+					createdAt
+					updatedAt
+				}
+			}
+		`
+
+		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
+			StandardClaims: jwt.StandardClaims{
+				Issuer:  "http://another.site.io",
+				Subject: "5d4a22e9587f3dbb8d33fd39",
+			},
+		})
+
+		if err != nil {
+			t.Fatalf("Error while trying to get the token for test: %v", err)
+		}
+
+		headers := map[string]string{
+			"Authorization": token,
+			"Content-Type":  "application/json",
+		}
+
+		response, err := httpClient.DoRequest(srv.URL, query, headers)
+
+		if err != nil {
+			t.Fatalf("Error while doing the request: %v", err)
+		}
+
+		err = json.Unmarshal(response, &expectedResponse)
+
+		if err != nil {
+			t.Fatalf("Error while trying to Unmarshal response: %v", err)
+		}
+
+		require.Empty(t, expectedResponse.Data)
+		require.NotZero(t, len(expectedResponse.Errors))
+
+		errResponse := expectedResponse.Errors[0]
+
+		require.Equal(t, errResponse.Message, "Unauthorized")
+		require.Equal(t, errResponse.Path, []string{"deactivateUser"})
+		require.Equal(t, errResponse.Extensions.Code, "UNAUTHORIZED")
+	})
+
 	t.Run("Should deactivate user if token is present", func(t *testing.T) {
 		var expectedResponse struct {
 			Data struct {

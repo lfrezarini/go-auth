@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/LucasFrezarini/go-auth-manager/credentials"
 	"github.com/LucasFrezarini/go-auth-manager/jsonwebtoken"
 )
 
@@ -15,6 +16,8 @@ func AuthHandler(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		} else {
 			claims, err := jsonwebtoken.Decode(authorization)
+
+			_, err = credentials.ValidateCredentials(claims)
 
 			if err != nil {
 				next.ServeHTTP(w, r)
