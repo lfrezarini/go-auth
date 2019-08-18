@@ -8,8 +8,9 @@ import (
 )
 
 type AuthUserPayload struct {
-	User  *models.User `json:"user"`
-	Token string       `json:"token"`
+	User         *models.User `json:"user"`
+	Token        string       `json:"token"`
+	RefreshToken string       `json:"refreshToken"`
 }
 
 type CreateUserInput struct {

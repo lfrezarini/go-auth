@@ -15,16 +15,33 @@ type Claims struct {
 const (
 	// AccessTokenLifetime represents the lifetime, in minutes, of an access token
 	AccessTokenLifetime = time.Minute * 15
+
+	// RefreshTokenLifetimeInMonths represents the lifetime, in months, of an refresh token
+	RefreshTokenLifetimeInMonths = 1
 )
 
 // CreateDefaultClaims returns an default claims object for an subject
-func CreateDefaultClaims(subject string) Claims {
+func CreateDefaultClaims(subject string) (claims Claims) {
+	claims = createCommonClains(subject)
+	claims.ExpiresAt = time.Now().UTC().Add(AccessTokenLifetime).Unix()
+
+	return
+}
+
+func createCommonClains(subject string) Claims {
 	return Claims{
 		StandardClaims: jwt.StandardClaims{
-			Issuer:    env.Config.ServerHost,
-			Subject:   subject,
-			ExpiresAt: time.Now().UTC().Add(AccessTokenLifetime).Unix(),
-			IssuedAt:  time.Now().UTC().Unix(),
+			Issuer:   env.Config.ServerHost,
+			Subject:  subject,
+			IssuedAt: time.Now().UTC().Unix(),
 		},
 	}
+}
+
+// CreateRefreshTokenClaims returns a claims object for an subject for an refresh token
+func CreateRefreshTokenClaims(subject string) (claims Claims) {
+	claims = createCommonClains(subject)
+	claims.ExpiresAt = time.Now().UTC().AddDate(0, RefreshTokenLifetimeInMonths, 0).Unix()
+
+	return
 }

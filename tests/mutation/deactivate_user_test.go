@@ -2,7 +2,6 @@ package mutation_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -226,7 +225,6 @@ func TestDeactivateUser(t *testing.T) {
 
 		response, err := httpClient.DoRequest(srv.URL, query, headers)
 
-		fmt.Println(response)
 		if err != nil {
 			t.Fatalf("Error while doing the request: %v", err)
 		}

@@ -1,7 +1,6 @@
 type User {
   id: ID!
   email: String!
-  password: String!
   roles: [String!]!
   active: Boolean!
   createdAt: String!
@@ -18,6 +17,7 @@ type Claims {
 type AuthUserPayload {
   user: User!
   token: String!
+  refreshToken: String!
 }
 
 type ValidateTokenPayload {

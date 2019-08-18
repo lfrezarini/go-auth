@@ -17,9 +17,6 @@ import (
 // UserDao is a representation of a User DAO
 type UserDao struct{}
 
-// UserCollection defines the name of the collection that this DAO uses
-const UserCollection = "users"
-
 // GetAll fetch all the users registered on the database
 func (d *UserDao) GetAll() ([]*models.User, error) {
 	collection := db.Collection(UserCollection)

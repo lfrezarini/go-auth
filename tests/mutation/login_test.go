@@ -24,7 +24,8 @@ func TestLogin(t *testing.T) {
 					CreatedAt string
 					UpdatedAt string
 				}
-				Token string
+				Token        string
+				RefreshToken string
 			}
 		}
 
@@ -35,6 +36,7 @@ func TestLogin(t *testing.T) {
 					password:"12345"
 				  }) {
 					token
+					refreshToken
 					user {
 					  id
 					  email
@@ -48,6 +50,7 @@ func TestLogin(t *testing.T) {
 		require.Equal(t, "test1@test.com", resp.Login.User.Email)
 		require.Equal(t, []string{"user"}, resp.Login.User.Roles)
 		require.NotEmpty(t, resp.Login.Token)
+		require.NotEmpty(t, resp.Login.RefreshToken)
 	})
 
 	t.Run("Should not allow the user to login if password is invalid", func(t *testing.T) {

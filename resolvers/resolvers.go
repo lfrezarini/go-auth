@@ -7,9 +7,11 @@ import (
 )
 
 var userDao dao.UserDao
+var refreshTokenDao dao.RefreshTokenDao
 
 func init() {
 	userDao = dao.UserDao{}
+	refreshTokenDao = dao.RefreshTokenDao{}
 }
 
 // Resolver is the structure of the graphql root resolver

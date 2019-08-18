@@ -25,6 +25,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 	hash, err := crypt.HashPassword(data.Password)
 
 	if err != nil {
+		log.Printf("Error while trying to create user: %v\n", err)
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
 	}
 
@@ -40,15 +41,39 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 	insertedID, err := userDao.CreateOne(user)
 
 	if err != nil {
+		log.Printf("Error while trying to create user: %v\n", err)
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
 	}
 
 	user.ID = insertedID
 	token, err := jsonwebtoken.Encode(jsonwebtoken.CreateDefaultClaims(user.ID.Hex()))
 
+	if err != nil {
+		log.Printf("Error while trying to create user: %v\n", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
+	}
+
+	refreshToken, err := jsonwebtoken.Encode(jsonwebtoken.CreateRefreshTokenClaims(user.ID.Hex()))
+
+	if err != nil {
+		log.Printf("Error while trying to create user: %v\n", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
+	}
+
+	updatedUser, err := refreshTokenDao.CreateOne(user.ID, models.RefreshToken{
+		Token:      refreshToken,
+		Identifier: "unknown",
+	})
+
+	if err != nil {
+		log.Printf("Error while trying to create user: %v\n", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
+	}
+
 	return &gqlmodels.AuthUserPayload{
-		Token: token,
-		User:  &user,
+		RefreshToken: refreshToken,
+		Token:        token,
+		User:         &updatedUser,
 	}, nil
 }
 
@@ -67,18 +92,28 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 	})
 
 	if err != nil || !crypt.ComparePassword(user.Password, data.Password) {
+		log.Println("Error while trying to login: %v", err)
 		return nil, gqlerrors.CreateAuthorizationError()
 	}
 
 	token, err := jsonwebtoken.Encode(jsonwebtoken.CreateDefaultClaims(user.ID.Hex()))
 
 	if err != nil {
+		log.Println("Error while trying to login: %v", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to login")
+	}
+
+	refreshToken, err := jsonwebtoken.Encode(jsonwebtoken.CreateRefreshTokenClaims(user.ID.Hex()))
+
+	if err != nil {
+		log.Println("Error while trying to login: %v", err)
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to login")
 	}
 
 	return &gqlmodels.AuthUserPayload{
-		User:  user,
-		Token: token,
+		User:         user,
+		Token:        token,
+		RefreshToken: refreshToken,
 	}, nil
 }
 

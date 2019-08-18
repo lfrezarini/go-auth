@@ -24,7 +24,8 @@ func TestCreateUser(t *testing.T) {
 					CreatedAt string
 					UpdatedAt string
 				}
-				Token string
+				Token        string
+				RefreshToken string
 			}
 		}
 
@@ -43,6 +44,7 @@ func TestCreateUser(t *testing.T) {
 					  updatedAt
 					}
 					token
+					refreshToken
 				  }
 			}
 		`, &resp)
@@ -51,6 +53,7 @@ func TestCreateUser(t *testing.T) {
 		require.Equal(t, "test@email.com", resp.CreateUser.User.Email)
 		require.Equal(t, []string{"user"}, resp.CreateUser.User.Roles)
 		require.NotEmpty(t, resp.CreateUser.Token)
+		require.NotEmpty(t, resp.CreateUser.RefreshToken)
 	})
 
 	t.Run("Should not create a new user if email already exists", func(t *testing.T) {

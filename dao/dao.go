@@ -13,6 +13,9 @@ import (
 
 var db *mongo.Database
 
+// UserCollection defines the name of the user collection
+const UserCollection = "users"
+
 func init() {
 	client, err := mongo.NewClient(options.Client().ApplyURI(env.Config.MongoURI))
 	if err != nil {
