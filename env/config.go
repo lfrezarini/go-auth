@@ -11,14 +11,17 @@ type config struct {
 var Config config
 
 func init() {
+	Config = createConfig()
+}
 
+func createConfig() config {
 	mongoURI := os.Getenv("MONGO_URI")
 
 	if mongoURI == "" {
 		mongoURI = "mongodb://127.0.0.1:27017"
 	}
 
-	Config = config{
+	return config{
 		MongoURI:   mongoURI,
 		ServerHost: os.Getenv("SERVER_HOST"),
 	}
