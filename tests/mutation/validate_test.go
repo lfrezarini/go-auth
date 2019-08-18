@@ -50,10 +50,13 @@ func TestValidate(t *testing.T) {
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
 			StandardClaims: jwt.StandardClaims{
-				Issuer:  "http://test.io",
-				Subject: "5d470b3e98b0116d7d8ca48c",
+				Issuer:    "http://test.io",
+				Subject:   "5d470b3e98b0116d7d8ca48c",
+				ExpiresAt: time.Now().UTC().Unix(),
 			},
 		})
+
+		fmt.Println(token)
 
 		if err != nil {
 			t.FailNow()
