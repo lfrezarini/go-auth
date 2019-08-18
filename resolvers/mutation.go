@@ -115,8 +115,13 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to login")
 	}
 
+	updatedUser, err := refreshTokenDao.CreateOne(user.ID, models.RefreshToken{
+		Token:      refreshToken,
+		Identifier: "unknown",
+	})
+
 	return &gqlmodels.AuthUserPayload{
-		User:         user,
+		User:         &updatedUser,
 		Token:        token,
 		RefreshToken: refreshToken,
 	}, nil
