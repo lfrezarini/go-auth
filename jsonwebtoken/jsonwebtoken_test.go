@@ -2,6 +2,7 @@ package jsonwebtoken_test
 
 import (
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -12,6 +13,24 @@ import (
 
 var jwtSecret = []byte("supersecretkey")
 
+func generateTestToken(t *testing.T, subject string) string {
+	claims := jsonwebtoken.Claims{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "http://test.io",
+			Subject:   subject,
+			IssuedAt:  time.Now().UTC().Unix(),
+			ExpiresAt: time.Now().UTC().Add(15 * time.Minute).Unix(),
+		},
+	}
+
+	token, err := jsonwebtoken.Encode(claims)
+
+	if err != nil {
+		t.FailNow()
+	}
+
+	return token
+}
 func TestEncodeToken(t *testing.T) {
 	t.Run("Should encode a token with the passed claims", func(t *testing.T) {
 		expirationTime := time.Now().UTC().Add(1 * time.Minute).Unix()
@@ -20,6 +39,7 @@ func TestEncodeToken(t *testing.T) {
 			StandardClaims: jwt.StandardClaims{
 				Issuer:    "http://test.io",
 				Subject:   "test",
+				IssuedAt:  1566141649,
 				ExpiresAt: expirationTime,
 			},
 		}
@@ -52,20 +72,17 @@ func TestEncodeToken(t *testing.T) {
 
 func TestDecodeToken(t *testing.T) {
 	t.Run("Should decode a valid token and retrieve the claims", func(t *testing.T) {
-		/*
-			Generated with key: "supersecretkey"
-			The claims saved in this token are:
-			Issuer: "http://test.io"
-			Subject: "5d470b3e98b0116d7d8ca48c"
-		*/
-		token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vdGVzdC5pbyIsInN1YiI6IjVkNDcwYjNlOThiMDExNmQ3ZDhjYTQ4YyJ9.R2bXULilY_kNrpg20uMxqZuy6UOCGNDH4Hrb9FU_aiQ"
+		token := generateTestToken(t, "5d470b3e98b0116d7d8ca48c")
 
 		claims, err := jsonwebtoken.Decode(token)
+		log.Println(claims.IssuedAt)
 
 		require.Empty(t, err)
 		require.NotEmpty(t, claims)
 		require.Equal(t, "http://test.io", claims.Issuer)
 		require.Equal(t, "5d470b3e98b0116d7d8ca48c", claims.Subject)
+		require.NotEmpty(t, claims.IssuedAt)
+		require.NotEmpty(t, claims.ExpiresAt)
 	})
 
 	t.Run("Should return error if the token is an empty string", func(t *testing.T) {
@@ -112,5 +129,7 @@ func TestDecodeToken(t *testing.T) {
 
 		require.Empty(t, claims)
 		require.NotEmpty(t, err)
+
+		require.Equal(t, "Invalid authorization token: Unexpected signing method: RS256", err.Error())
 	})
 }

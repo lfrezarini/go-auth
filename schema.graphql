@@ -11,6 +11,8 @@ type User {
 type Claims {
   iss: String!
   sub: String!
+  exp: Int!
+  iat: Int!
 }
 
 type AuthUserPayload {

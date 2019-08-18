@@ -18,7 +18,6 @@ import (
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.CreateUserInput) (*gqlmodels.AuthUserPayload, error) {
-
 	if emailAlreadyExists(data.Email) {
 		return nil, gqlerrors.CreateConflictError("User already exists")
 	}
@@ -67,11 +66,7 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 		Active: true,
 	})
 
-	if err != nil {
-		return nil, gqlerrors.CreateAuthorizationError()
-	}
-
-	if !crypt.ComparePassword(user.Password, data.Password) {
+	if err != nil || !crypt.ComparePassword(user.Password, data.Password) {
 		return nil, gqlerrors.CreateAuthorizationError()
 	}
 

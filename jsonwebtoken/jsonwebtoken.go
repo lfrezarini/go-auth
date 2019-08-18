@@ -3,6 +3,7 @@ package jsonwebtoken
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -24,10 +25,10 @@ func Decode(tokenString string) (Claims, error) {
 	})
 
 	if err != nil {
-		return Claims{}, errors.New("Invalid authorization token")
+		return Claims{}, fmt.Errorf("Invalid authorization token: %v", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid && claims.VerifyExpiresAt(time.Now().UTC().Unix(), true) {
 		return *claims, nil
 	}
 

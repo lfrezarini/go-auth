@@ -72,8 +72,10 @@ func TestUpdateUser(t *testing.T) {
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
 			StandardClaims: jwt.StandardClaims{
-				Issuer:  "http://test.io",
-				Subject: "5d4a22e9587f3dbb8d33fd38",
+				Issuer:    "http://test.io",
+				Subject:   "5d4a22e9587f3dbb8d33fd38",
+				IssuedAt:  time.Now().UTC().Unix(),
+				ExpiresAt: time.Now().UTC().Add(15 * time.Minute).Unix(),
 			},
 		})
 
@@ -134,8 +136,10 @@ func TestUpdateUser(t *testing.T) {
 
 		token, err := jsonwebtoken.Encode(jsonwebtoken.Claims{
 			StandardClaims: jwt.StandardClaims{
-				Issuer:  "http://another.site.io",
-				Subject: "5d4a22e9587f3dbb8d33fd38",
+				Issuer:    "http://another.site.io",
+				Subject:   "5d4a22e9587f3dbb8d33fd38",
+				IssuedAt:  time.Now().UTC().Unix(),
+				ExpiresAt: time.Now().UTC().Add(15 * time.Minute).Unix(),
 			},
 		})
 
@@ -203,6 +207,7 @@ func TestUpdateUser(t *testing.T) {
 				Issuer:    "http://test.io",
 				Subject:   "5d4a22e9587f3dbb8d33fd38",
 				ExpiresAt: time.Now().UTC().Add(-15 * time.Minute).Unix(),
+				IssuedAt:  time.Now().UTC().Add(-time.Hour).Unix(),
 			},
 		})
 
