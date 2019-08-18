@@ -66,6 +66,7 @@ type ComplexityRoot struct {
 		CreateUser     func(childComplexity int, data gqlmodels.CreateUserInput) int
 		DeactivateUser func(childComplexity int) int
 		Login          func(childComplexity int, data gqlmodels.LoginUserInput) int
+		RefreshToken   func(childComplexity int, refreshToken string) int
 		UpdateUser     func(childComplexity int, data gqlmodels.UpdateUserInput) int
 		ValidateToken  func(childComplexity int, token string) int
 	}
@@ -102,6 +103,7 @@ type MutationResolver interface {
 	DeactivateUser(ctx context.Context) (*models.User, error)
 	Login(ctx context.Context, data gqlmodels.LoginUserInput) (*gqlmodels.AuthUserPayload, error)
 	ValidateToken(ctx context.Context, token string) (*gqlmodels.ValidateTokenPayload, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*gqlmodels.AuthUserPayload, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*models.User, error)
@@ -207,6 +209,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["data"].(gqlmodels.LoginUserInput)), true
+
+	case "Mutation.refreshToken":
+		if e.complexity.Mutation.RefreshToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_refreshToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RefreshToken(childComplexity, args["refreshToken"].(string)), true
 
 	case "Mutation.updateUser":
 		if e.complexity.Mutation.UpdateUser == nil {
@@ -417,6 +431,7 @@ type Mutation {
   deactivateUser: User! @isAuthenticated
   login(data: LoginUserInput!): AuthUserPayload!
   validateToken(token: String!): ValidateTokenPayload!
+  refreshToken(refreshToken: String!): AuthUserPayload!
 }
 
 directive @isAuthenticated on FIELD_DEFINITION`},
@@ -451,6 +466,20 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 		}
 	}
 	args["data"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["refreshToken"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["refreshToken"] = arg0
 	return args, nil
 }
 
@@ -1028,6 +1057,50 @@ func (ec *executionContext) _Mutation_validateToken(ctx context.Context, field g
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNValidateTokenPayload2ᚖgithubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋgqlmodelsᚐValidateTokenPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_refreshToken_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RefreshToken(rctx, args["refreshToken"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*gqlmodels.AuthUserPayload)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNAuthUserPayload2ᚖgithubᚗcomᚋLucasFrezariniᚋgoᚑauthᚑmanagerᚋgqlmodelsᚐAuthUserPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2852,6 +2925,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "validateToken":
 			out.Values[i] = ec._Mutation_validateToken(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "refreshToken":
+			out.Values[i] = ec._Mutation_refreshToken(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

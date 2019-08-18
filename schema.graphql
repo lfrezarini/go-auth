@@ -51,6 +51,7 @@ type Mutation {
   deactivateUser: User! @isAuthenticated
   login(data: LoginUserInput!): AuthUserPayload!
   validateToken(token: String!): ValidateTokenPayload!
+  refreshToken(refreshToken: String!): AuthUserPayload!
 }
 
 directive @isAuthenticated on FIELD_DEFINITION

@@ -33,6 +33,9 @@ db.users.insertMany([
     "roles": ["user"],
     "active": true,
     "created_at": ISODate("2019-08-07T00:58:07.162Z"),
-    "updated_at": ISODate("2019-08-07T00:58:07.162Z")
+    "updated_at": ISODate("2019-08-07T00:58:07.162Z"),
+    "refresh_tokens": [
+      {token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1Njg4NDMzNjcsImlhdCI6MTU2NjE2NDk2NywiaXNzIjoiaHR0cDovL3Rlc3QuaW8iLCJzdWIiOiI1ZDRhMjJlOTU4N2YzZGJiOGQzM2ZkMzkifQ.qqGHNJ5WJO5KjfylnW7klRvegeVlMVx8Fv4ehnuigpA", identifier: "unknown"}
+    ]
   }
 ]);

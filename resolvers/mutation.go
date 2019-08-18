@@ -91,22 +91,27 @@ func (r *mutationResolver) Login(ctx context.Context, data gqlmodels.LoginUserIn
 		Active: true,
 	})
 
-	if err != nil || !crypt.ComparePassword(user.Password, data.Password) {
-		log.Println("Error while trying to login: %v", err)
+	if err != nil {
+		log.Printf("Error while trying to login: %v\n", err)
+		return nil, gqlerrors.CreateAuthorizationError()
+	}
+
+	if !crypt.ComparePassword(user.Password, data.Password) {
+		log.Println("Error while trying to login: Invalid Password")
 		return nil, gqlerrors.CreateAuthorizationError()
 	}
 
 	token, err := jsonwebtoken.Encode(jsonwebtoken.CreateDefaultClaims(user.ID.Hex()))
 
 	if err != nil {
-		log.Println("Error while trying to login: %v", err)
+		log.Printf("Error while trying to login: %v\n", err)
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to login")
 	}
 
 	refreshToken, err := jsonwebtoken.Encode(jsonwebtoken.CreateRefreshTokenClaims(user.ID.Hex()))
 
 	if err != nil {
-		log.Println("Error while trying to login: %v", err)
+		log.Printf("Error while trying to login: %v\n", err)
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to login")
 	}
 
@@ -194,4 +199,52 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context) (*models.User, er
 	}
 
 	return user, nil
+}
+
+func (r *mutationResolver) RefreshToken(ctx context.Context, refreshToken string) (*gqlmodels.AuthUserPayload, error) {
+	claims, err := jsonwebtoken.Decode(refreshToken)
+
+	if err != nil {
+		return nil, gqlerrors.CreateAuthorizationError()
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(claims.Subject)
+
+	if err != nil {
+		log.Printf("Error while trying to convert userID to objectID: %v\n", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to refresh token the user")
+	}
+
+	user, err := userDao.FindByID(objectID)
+
+	if err != nil {
+		log.Printf("Error while trying to get a refreshed token: %v", err)
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to refresh token")
+	}
+
+	refreshTokenExists := false
+
+	for _, value := range user.RefreshTokens {
+		refreshTokenExists = value.Token == refreshToken
+
+		if refreshTokenExists {
+			break
+		}
+	}
+
+	if !refreshTokenExists {
+		return nil, gqlerrors.CreateAuthorizationError()
+	}
+
+	token, err := jsonwebtoken.Encode(jsonwebtoken.CreateRefreshTokenClaims(user.ID.Hex()))
+
+	if err != nil {
+		return nil, gqlerrors.CreateInternalServerError("Error while trying to refresh token")
+	}
+
+	return &gqlmodels.AuthUserPayload{
+		User:         user,
+		RefreshToken: refreshToken,
+		Token:        token,
+	}, nil
 }
