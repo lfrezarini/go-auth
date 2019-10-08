@@ -410,6 +410,7 @@ input CreateUserInput {
   email: String!
   password: String!
   roles: [String!]!
+  active: Boolean
 }
 
 input UpdateUserInput {
@@ -2714,6 +2715,12 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		case "roles":
 			var err error
 			it.Roles, err = ec.unmarshalNString2ᚕstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "active":
+			var err error
+			it.Active, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}

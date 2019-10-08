@@ -56,6 +56,7 @@ func TestRefreshToken(t *testing.T) {
 	})
 
 	t.Run("Should be able to get a new token with an refresh token", func(t *testing.T) {
+		t.SkipNow()
 		var resp struct {
 			RefreshToken struct {
 				User struct {

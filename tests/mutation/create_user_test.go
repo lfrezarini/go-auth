@@ -23,6 +23,7 @@ func TestCreateUser(t *testing.T) {
 					Roles     []string
 					CreatedAt string
 					UpdatedAt string
+					Active    bool
 				}
 				Token        string
 				RefreshToken string
@@ -40,6 +41,7 @@ func TestCreateUser(t *testing.T) {
 					  id
 					  email
 					  roles
+					  active
 					  createdAt
 					  updatedAt
 					}
@@ -52,6 +54,7 @@ func TestCreateUser(t *testing.T) {
 		require.NotEmpty(t, resp.CreateUser.User.ID)
 		require.Equal(t, "test@email.com", resp.CreateUser.User.Email)
 		require.Equal(t, []string{"user"}, resp.CreateUser.User.Roles)
+		require.True(t, resp.CreateUser.User.Active)
 		require.NotEmpty(t, resp.CreateUser.Token)
 		require.NotEmpty(t, resp.CreateUser.RefreshToken)
 	})
@@ -92,5 +95,51 @@ func TestCreateUser(t *testing.T) {
 		require.Equal(t, response.Message, "User already exists")
 		require.Equal(t, response.Path[0], "createUser")
 		require.Equal(t, response.Extensions.Code, "CONFLICT")
+	})
+
+	t.Run("Should allow to create a user deactivated by default", func(t *testing.T) {
+		var resp struct {
+			CreateUser struct {
+				User struct {
+					ID        string
+					Email     string
+					Roles     []string
+					Active    bool
+					CreatedAt string
+					UpdatedAt string
+				}
+				Token        string
+				RefreshToken string
+			}
+		}
+
+		c.MustPost(`
+			mutation {
+				createUser(data:{
+					email: "testdeactivated@email.com"
+					password: "12345"
+					roles: ["user"]
+					active: false
+				  }) {
+					user {
+					  id
+					  email
+					  roles
+					  active
+					  createdAt
+					  updatedAt
+					}
+					token
+					refreshToken
+				  }
+			}
+		`, &resp)
+
+		require.NotEmpty(t, resp.CreateUser.User.ID)
+		require.Equal(t, "testdeactivated@email.com", resp.CreateUser.User.Email)
+		require.Equal(t, []string{"user"}, resp.CreateUser.User.Roles)
+		require.False(t, resp.CreateUser.User.Active)
+		require.NotEmpty(t, resp.CreateUser.Token)
+		require.NotEmpty(t, resp.CreateUser.RefreshToken)
 	})
 }

@@ -29,11 +29,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 		return nil, gqlerrors.CreateInternalServerError("Error while trying to create user")
 	}
 
+	active := true
+
+	if data.Active != nil {
+		active = *data.Active
+	}
+
 	user := models.User{
 		Email:     data.Email,
 		Password:  hash,
 		Roles:     []string{"user"},
-		Active:    true,
+		Active:    active,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

@@ -30,6 +30,7 @@ input CreateUserInput {
   email: String!
   password: String!
   roles: [String!]!
+  active: Boolean
 }
 
 input UpdateUserInput {
