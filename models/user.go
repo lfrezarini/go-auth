@@ -9,6 +9,7 @@ import (
 // User represents the data structure of a user in the MongoDB database
 type User struct {
 	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Name          string             `json:"string" bson:"name,omitempty"`
 	Email         string             `json:"email" bson:"email,omitempty"`
 	Password      string             `json:"password" bson:"password,omitempty"`
 	Roles         []string           `json:"roles" bson:"roles,omitempty"`

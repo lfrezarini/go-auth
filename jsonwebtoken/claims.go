@@ -14,7 +14,7 @@ type Claims struct {
 
 const (
 	// AccessTokenLifetime represents the lifetime, in minutes, of an access token
-	AccessTokenLifetime = time.Minute * 15
+	AccessTokenLifetime = time.Minute * 300
 
 	// RefreshTokenLifetimeInMonths represents the lifetime, in months, of an refresh token
 	RefreshTokenLifetimeInMonths = 1

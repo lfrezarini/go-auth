@@ -1,5 +1,6 @@
 type User {
   id: ID!
+  name: String!
   email: String!
   roles: [String!]!
   active: Boolean!
@@ -27,6 +28,7 @@ type ValidateTokenPayload {
 }
 
 input CreateUserInput {
+  name: String!
   email: String!
   password: String!
   roles: [String!]!

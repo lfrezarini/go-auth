@@ -36,6 +36,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, data gqlmodels.Create
 	}
 
 	user := models.User{
+		Name:      data.Name,
 		Email:     data.Email,
 		Password:  hash,
 		Roles:     []string{"user"},
